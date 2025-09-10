@@ -11,12 +11,13 @@ import React, { useRef, useState, useEffect } from "react";
 
 export default function HtmlCanvasRenderer() {
   const [html, setHtml] = useState(`
-<div style="font-family: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial; padding:24px; background:#f6f7fb; min-height:240px;">
+<div style="font-family: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial; padding:24px; background:#f6f7fb; min-height:600px; width: 500px;">
   <h1 style="color:#0f172a; margin:0 0 8px 0;">Hello — editable canvas</h1>
   <p style="margin:0 0 12px 0; color:#334155;">Click any element to select it. Inline styles are preserved.</p>
   <button id="cta" style="padding:8px 12px; border-radius:8px; background:#7c3aed; color:white; border:none;">Click me</button>
   <div style="margin-top:16px; display:flex; gap:8px;">
     <div style="width:120px; height:80px; background:#ef4444; border-radius:6px;"></div>
+    <div style="width:120px; height:80px; background:#10b981; border-radius:6px;"></div>
     <div style="width:120px; height:80px; background:#10b981; border-radius:6px;"></div>
   </div>
 </div>
@@ -146,43 +147,9 @@ export default function HtmlCanvasRenderer() {
     <div className="p-4 min-h-screen bg-white">
       <div className="grid grid-cols-3 gap-4">
         {/* Editor */}
-        <div className="col-span-1">
-          <label className="block text-sm font-medium mb-2">
-            HTML + inline CSS
-          </label>
-          <textarea
-            value={html}
-            onChange={(e) => setHtml(e.target.value)}
-            className="w-full h-96 p-2 border rounded resize-none font-mono text-xs"
-          />
-          <div className="mt-2 flex gap-2">
-            <button
-              onClick={() => {
-                // render is automatic because we bind html to innerHTML; this button can be used to reset selection
-                setSelectedPath(null);
-                setSelectedInfo(null);
-                setHighlightRect(null);
-              }}
-              className="px-3 py-1 rounded bg-slate-800 text-white"
-            >
-              Render
-            </button>
-            <button
-              onClick={() => {
-                setHtml("");
-                setSelectedPath(null);
-                setSelectedInfo(null);
-                setHighlightRect(null);
-              }}
-              className="px-3 py-1 rounded border"
-            >
-              Clear
-            </button>
-          </div>
-        </div>
 
         {/* Canvas */}
-        <div className="col-span-2 relative">
+        <div className="">
           <div className="flex items-center justify-between mb-2">
             <h3 className="text-sm font-semibold">Canvas preview</h3>
             <div className="text-xs text-slate-500">
@@ -193,11 +160,14 @@ export default function HtmlCanvasRenderer() {
           <div
             ref={containerRef}
             className="relative border rounded h-96 overflow-auto p-4 bg-white"
-            style={{ minHeight: 300 }}
+            style={{ minHeight: 800, minWidth: 1000 }}
           >
             {/* This wrapper contains the user HTML. We deliberately use dangerouslySetInnerHTML so inline styles are preserved. */}
             <div
-              className="render-wrapper"
+              className="render-wrapper w-full h-full"
+              style={{
+                overflow: "auto",
+              }}
               dangerouslySetInnerHTML={{ __html: html }}
             />
 
@@ -219,106 +189,6 @@ export default function HtmlCanvasRenderer() {
                 }}
               />
             )}
-          </div>
-
-          {/* Inspector */}
-          <div className="mt-3 grid grid-cols-2 gap-4">
-            <div className="p-3 border rounded bg-gray-50">
-              <h4 className="text-xs font-medium mb-2">Selection</h4>
-              {selectedInfo ? (
-                <div className="text-xs space-y-1">
-                  <div>
-                    <strong>Path:</strong>{" "}
-                    <code className="break-all">{selectedPath}</code>
-                  </div>
-                  <div>
-                    <strong>Tag:</strong> {selectedInfo.tag}
-                  </div>
-                  <div>
-                    <strong>Id:</strong> {selectedInfo.id || "—"}
-                  </div>
-                  <div>
-                    <strong>Classes:</strong> {selectedInfo.classes || "—"}
-                  </div>
-                  <div>
-                    <strong>Inline style:</strong>{" "}
-                    <div className="mt-1 p-2 bg-white rounded text-xs font-mono">
-                      {selectedInfo.inlineStyle || "—"}
-                    </div>
-                  </div>
-                  <div>
-                    <strong>Text:</strong>{" "}
-                    <div className="mt-1 text-sm text-slate-600">
-                      {selectedInfo.text}
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div className="text-xs text-slate-500">
-                  No element selected. Click an element inside the canvas.
-                </div>
-              )}
-            </div>
-
-            <div className="p-3 border rounded bg-gray-50">
-              <h4 className="text-xs font-medium mb-2">Actions</h4>
-              <div className="flex flex-col gap-2">
-                <button
-                  onClick={() => {
-                    // scroll selected into view
-                    if (!selectedPath) return;
-                    const wrapper =
-                      containerRef.current.querySelector(".render-wrapper");
-                    if (!wrapper) return;
-                    try {
-                      const el =
-                        wrapper.querySelector(
-                          selectedPath.replace(/:nth-child\(\d+\)/g, "")
-                        ) || wrapper.querySelector(selectedPath);
-                      if (el)
-                        el.scrollIntoView({
-                          behavior: "smooth",
-                          block: "center",
-                        });
-                    } catch (err) {}
-                  }}
-                  className="px-3 py-1 rounded border text-sm"
-                >
-                  Scroll into view
-                </button>
-
-                <button
-                  onClick={() => {
-                    // copy outerHTML
-                    if (!selectedPath) return;
-                    const wrapper =
-                      containerRef.current.querySelector(".render-wrapper");
-                    try {
-                      const el =
-                        wrapper.querySelector(
-                          selectedPath.replace(/:nth-child\(\d+\)/g, "")
-                        ) || wrapper.querySelector(selectedPath);
-                      if (el) navigator.clipboard.writeText(el.outerHTML);
-                    } catch (err) {}
-                  }}
-                  className="px-3 py-1 rounded border text-sm"
-                >
-                  Copy outerHTML
-                </button>
-
-                <button
-                  onClick={() => {
-                    setHtml("");
-                    setSelectedPath(null);
-                    setSelectedInfo(null);
-                    setHighlightRect(null);
-                  }}
-                  className="px-3 py-1 rounded border text-sm"
-                >
-                  Clear canvas
-                </button>
-              </div>
-            </div>
           </div>
         </div>
       </div>
