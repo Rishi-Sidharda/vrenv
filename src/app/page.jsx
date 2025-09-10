@@ -2,6 +2,13 @@
 
 import React, { useRef, useState, useEffect } from "react";
 
+// Figma-like HTML renderer
+// - paste HTML with inline CSS into the editor
+// - it renders inside a sandboxed render area
+// - you can click any element inside the render area to select it
+// - selected element is visually highlighted with an absolutely-positioned overlay
+// - an inspector shows the element's tag, id, classes and inline styles
+
 export default function HtmlCanvasRenderer() {
   const [html, setHtml] = useState(`
 <div style="font-family: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial; padding:24px; background:#f6f7fb; min-height:240px;">
@@ -10,7 +17,6 @@ export default function HtmlCanvasRenderer() {
   <button id="cta" style="padding:8px 12px; border-radius:8px; background:#7c3aed; color:white; border:none;">Click me</button>
   <div style="margin-top:16px; display:flex; gap:8px;">
     <div style="width:120px; height:80px; background:#ef4444; border-radius:6px;"></div>
-    <div style="width:120px; height:80px; background:#10b981; border-radius:6px;"></div>
     <div style="width:120px; height:80px; background:#10b981; border-radius:6px;"></div>
   </div>
 </div>
@@ -141,13 +147,13 @@ export default function HtmlCanvasRenderer() {
       <div className="grid grid-cols-3 gap-4">
         {/* Editor */}
         <div className="col-span-1">
-          <label className="block text-sm font-medium mb-2 text-black">
+          <label className="block text-sm font-medium mb-2">
             HTML + inline CSS
           </label>
           <textarea
             value={html}
             onChange={(e) => setHtml(e.target.value)}
-            className="w-full text-black h-96 p-2 border rounded resize-none font-mono text-xs"
+            className="w-full h-96 p-2 border rounded resize-none font-mono text-xs"
           />
           <div className="mt-2 flex gap-2">
             <button
@@ -168,7 +174,7 @@ export default function HtmlCanvasRenderer() {
                 setSelectedInfo(null);
                 setHighlightRect(null);
               }}
-              className="px-3 py-1 rounded border text-white bg-blue-900"
+              className="px-3 py-1 rounded border"
             >
               Clear
             </button>
@@ -178,7 +184,7 @@ export default function HtmlCanvasRenderer() {
         {/* Canvas */}
         <div className="col-span-2 relative">
           <div className="flex items-center justify-between mb-2">
-            <h3 className="text-sm font-semibold text-black">Canvas preview</h3>
+            <h3 className="text-sm font-semibold">Canvas preview</h3>
             <div className="text-xs text-slate-500">
               Click elements to select — press Delete to remove
             </div>
@@ -203,13 +209,12 @@ export default function HtmlCanvasRenderer() {
                   position: "absolute",
                   pointerEvents: "none",
                   top: highlightRect.top + "px",
-                  left: highlightRect.left + "px",
+                  left: highlightRect.left - 0.5 + "px",
                   width: highlightRect.width + "px",
                   height: highlightRect.height + "px",
-                  boxShadow:
-                    "0 0 0 2px rgba(124,58,237,0.9), 0 4px 12px rgba(2,6,23,0.12)",
-                  borderRadius: 6,
-                  transition: "all 120ms ease",
+                  outline: "3px solid rgba(124,58,237,0.9)",
+                  outlineOffset: "-2px", // optional, shrink slightly inside
+                  borderRadius: 0,
                   zIndex: 40,
                 }}
               />
@@ -218,7 +223,7 @@ export default function HtmlCanvasRenderer() {
 
           {/* Inspector */}
           <div className="mt-3 grid grid-cols-2 gap-4">
-            <div className="p-3 border rounded bg-gray-50 text-black">
+            <div className="p-3 border rounded bg-gray-50">
               <h4 className="text-xs font-medium mb-2">Selection</h4>
               {selectedInfo ? (
                 <div className="text-xs space-y-1">
@@ -255,7 +260,7 @@ export default function HtmlCanvasRenderer() {
               )}
             </div>
 
-            <div className="p-3 border rounded bg-gray-50 text-black">
+            <div className="p-3 border rounded bg-gray-50">
               <h4 className="text-xs font-medium mb-2">Actions</h4>
               <div className="flex flex-col gap-2">
                 <button
