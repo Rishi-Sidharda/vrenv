@@ -19,8 +19,8 @@ export default function HtmlCanvasRenderer() {
 
   const containerRef = useRef(null);
   const [selectedPath, setSelectedPath] = useState(null); // CSS path or null
-  const [selectedInfo, setSelectedInfo] = useState(null);
   const [highlightRect, setHighlightRect] = useState(null);
+  const [scale, setScale] = useState(1);
 
   // utility to build a readable CSS path for the element
 
@@ -41,7 +41,6 @@ export default function HtmlCanvasRenderer() {
       if (!wrapper) return;
       if (target === container || target === wrapper) {
         setSelectedPath(null);
-        setSelectedInfo(null);
         setHighlightRect(null);
         return;
       }
@@ -58,32 +57,43 @@ export default function HtmlCanvasRenderer() {
       };
 
       setHighlightRect(relative);
-      const path = buildPath(target, wrapper);
-      setSelectedPath(path);
 
-      // collect info
-      const info = {
-        tag: target.tagName?.toLowerCase(),
-        id: target.id || null,
-        classes: target.className || null,
-        inlineStyle: target.getAttribute("style") || null,
-        text: target.innerText?.slice(0, 200) || "",
-      };
-      setSelectedInfo(info);
+      const el = containerRef.current;
+      if (!el) return;
 
       e.stopPropagation();
     }
 
+    function handleScroll() {
+      setHighlightRect(null);
+      setSelectedPath(null);
+    }
+    function handleWheel(e) {
+      if (e.ctrlKey || e.metaKey) return;
+      e.preventDefault();
+      const delta = e.deltaY > 0 ? -0.1 : 0.1;
+      setScale((prev) => Math.min(Math.max(prev + delta, 0.2), 5));
+      // also clear highlight when zooming
+      setHighlightRect(null);
+      setSelectedPath(null);
+    }
+
+    container.addEventListener("wheel", handleWheel, { passive: false });
+
     // use capture so we catch clicks before any user scripts inside the HTML
     container.addEventListener("click", onClick, true);
+    container.addEventListener("scroll", handleScroll);
 
-    return () => container.removeEventListener("click", onClick, true);
+    return () => {
+      container.removeEventListener("click", onClick, true);
+      container.removeEventListener("wheel", handleWheel);
+      container.removeEventListener("scroll", handleScroll);
+    };
   }, []);
 
   // When HTML changes re-deselect
   useEffect(() => {
     setSelectedPath(null);
-    setSelectedInfo(null);
     setHighlightRect(null);
   }, [html]);
 
@@ -137,6 +147,8 @@ export default function HtmlCanvasRenderer() {
               className="render-wrapper"
               style={{
                 overflow: "auto",
+                transform: `scale(${scale})`,
+                transformOrigin: "center center", // zoom from center
               }}
               dangerouslySetInnerHTML={{ __html: html }}
             />
