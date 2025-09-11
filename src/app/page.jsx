@@ -2,16 +2,9 @@
 
 import React, { useRef, useState, useEffect } from "react";
 
-// Figma-like HTML renderer
-// - paste HTML with inline CSS into the editor
-// - it renders inside a sandboxed render area
-// - you can click any element inside the render area to select it
-// - selected element is visually highlighted with an absolutely-positioned overlay
-// - an inspector shows the element's tag, id, classes and inline styles
-
 export default function HtmlCanvasRenderer() {
   const [html, setHtml] = useState(`
-  <div style="font-family: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial; padding:24px; background:#f6f7fb; min-height:600px; width: 500px;">
+  <div style="font-family: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial; padding:24px; background:#f6f7f3; min-height:600px; width: 600px;">
     <h1 style="color:#0f172a; margin:0 0 8px 0;">Hello — editable canvas</h1>
     <p style="margin:0 0 12px 0; color:#334155;">Click any element to select it. Inline styles are preserved.</p>
     <button id="cta" style="padding:8px 12px; border-radius:8px; background:#7c3aed; color:white; border:none;">Click me</button>
@@ -30,30 +23,6 @@ export default function HtmlCanvasRenderer() {
   const [highlightRect, setHighlightRect] = useState(null);
 
   // utility to build a readable CSS path for the element
-  function buildPath(el, root) {
-    if (!el || el === root || el === document) return null;
-    const parts = [];
-    let node = el;
-    while (node && node !== root && node !== document) {
-      let part = node.tagName ? node.tagName.toLowerCase() : "";
-      if (node.id) part += `#${node.id}`;
-      else if (node.classList && node.classList.length)
-        part += `.${[...node.classList].join(".")}`;
-      const parent = node.parentElement;
-      if (parent) {
-        const sameTagSiblings = Array.from(parent.children).filter(
-          (c) => c.tagName === node.tagName
-        );
-        if (sameTagSiblings.length > 1) {
-          const idx = Array.from(parent.children).indexOf(node) + 1; // 1-based
-          part += `:nth-child(${idx})`;
-        }
-      }
-      parts.unshift(part);
-      node = node.parentElement;
-    }
-    return parts.join(" > ");
-  }
 
   // When the user clicks inside the render area, capture the target element
   useEffect(() => {
@@ -145,14 +114,14 @@ export default function HtmlCanvasRenderer() {
   }, [selectedPath]);
 
   return (
-    <div className="p-4 min-h-screen bg-white">
+    <div className="p-4 min-h-screen bg-[#000814]">
       <div className="grid grid-cols-3 gap-4">
         {/* Editor */}
 
         {/* Canvas */}
         <div className="">
-          <div className="flex items-center justify-between mb-2">
-            <h3 className="text-sm font-semibold">Canvas preview</h3>
+          <div className="flex items-center justify-between mb-1">
+            <h3 className=" text-white">Canvas preview</h3>
             <div className="text-xs text-slate-500">
               Click elements to select — press Delete to remove
             </div>
@@ -160,12 +129,12 @@ export default function HtmlCanvasRenderer() {
 
           <div
             ref={containerRef}
-            className="relative border rounded h-96 overflow-auto p-4 bg-white"
-            style={{ minHeight: 800, minWidth: 1000 }}
+            className="relative border border-blue-950 flex h-96 overflow-auto p-4 bg-[#000e23] items-center justify-center"
+            style={{ minHeight: 800, minWidth: 1200 }}
           >
             {/* This wrapper contains the user HTML. We deliberately use dangerouslySetInnerHTML so inline styles are preserved. */}
             <div
-              className="render-wrapper w-full h-full"
+              className="render-wrapper"
               style={{
                 overflow: "auto",
               }}
@@ -180,7 +149,7 @@ export default function HtmlCanvasRenderer() {
                   position: "absolute",
                   pointerEvents: "none",
                   top: highlightRect.top + "px",
-                  left: highlightRect.left - 0.5 + "px",
+                  left: highlightRect.left - 0.6 + "px",
                   width: highlightRect.width + "px",
                   height: highlightRect.height + "px",
                   outline: "3px solid rgba(124,58,237,0.9)",
